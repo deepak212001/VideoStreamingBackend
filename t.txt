@@ -13,5 +13,4 @@ both are same
   when we npm run dev so nodemon restart filename
 
 
-  middlewares- code you have to run in between you have request. even before the request is fulfilled by the server if i want to put some checking in between then we do it inside the middleware.
-   
+middlewares- code you have to run in between you have request. even before the request is fulfilled by the server if i want to put some checking in between then we do it inside the middleware.
