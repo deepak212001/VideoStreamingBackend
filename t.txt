@@ -25,3 +25,5 @@ prettier -
     and in this file we add format ki ye aaise aaise format me rkhna hai 
 
     aur ek .prettierignore file hogi jisme btayege ki kis kis file me ye format use na kare
+
+database se jab bhi data fetch karna hai to time lagta ahi to async ya try catchuse karna hi hai 
