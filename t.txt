@@ -1,0 +1,13 @@
+nodemon is a package which use to restart the server when any change in files.
+
+npm install --save-dev nodemon 
+menad install nodemon as a development dependency..
+npm i -D nodemon
+both are same 
+
+"scripts": {
+    "dev": "nodemon src/index.js"
+  },
+
+  in package.json 
+  when we npm run dev so nodemon restart filename
