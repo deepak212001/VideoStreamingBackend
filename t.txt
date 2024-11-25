@@ -14,3 +14,14 @@ both are same
 
 
 middlewares- code you have to run in between you have request. even before the request is fulfilled by the server if i want to put some checking in between then we do it inside the middleware.
+
+
+prettier -
+  Prettier is an opinionated code formatter that enforces a consistent style by parsing your code and re-printing it with its own rules.
+
+  npm i prettier :- dev dependency hai
+  npm i -D prettier  
+  and create a file with name of .prettierrc
+    and in this file we add format ki ye aaise aaise format me rkhna hai 
+
+    aur ek .prettierignore file hogi jisme btayege ki kis kis file me ye format use na kare
