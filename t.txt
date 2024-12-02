@@ -27,3 +27,15 @@ prettier -
     aur ek .prettierignore file hogi jisme btayege ki kis kis file me ye format use na kare
 
 database se jab bhi data fetch karna hai to time lagta ahi to async ya try catchuse karna hi hai 
+
+
+mongoose aggregate paginate - that package allows to write aggregate queries
+   npm i mongoose-aggregate-paginate-v2
+
+bcrypt-  a library to help you hash password
+    npm i bcrypt
+
+JWT- json web token-> data will bi encoded in token , base on cryptography
+    npm i jsonwebtoken
+
+pre -> it is hook of mongoose ->pre middleware functions are executed one after another, when each middleware calls next

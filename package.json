@@ -1,11 +1,14 @@
 {
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "git": "^0.1.5",
     "it": "^1.1.1",
+    "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.11.0",
-    "mongoose": "^8.8.3"
+    "mongoose": "^8.8.3",
+    "mongoose-aggregate-paginate-v2": "^1.1.2"
   },
   "name": "07-professional-backend",
   "version": "1.0.0",
