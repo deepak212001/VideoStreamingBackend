@@ -5,7 +5,7 @@ class ApiError extends Error {
         errors = [],
         stack = ""
     ) {
-        super(message)
+        super(message) // pass the message overwrites the default message property of the Error class
         this.statusCode = statusCode
         this.data = null
         this.message = message

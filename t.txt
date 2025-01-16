@@ -26,7 +26,9 @@ prettier -
 
     aur ek .prettierignore file hogi jisme btayege ki kis kis file me ye format use na kare
 
-database se jab bhi data fetch karna hai to time lagta ahi to async ya try catchuse karna hi hai 
+database se jab bhi data fetch karna hai to time lagta ahi to async ya try catch use karna hi hai 
+
+cookie-parser is middleware that simplifies handling cookies. It parses incoming cookies from client requests and makes them accessible in the req.cookies object. This makes it easier to read and manipulate cookies in your Express JS application without manual parsing.
 
 
 mongoose aggregate paginate - that package allows to write aggregate queries
@@ -34,8 +36,8 @@ mongoose aggregate paginate - that package allows to write aggregate queries
 
 bcrypt-  a library to help you hash password
     npm i bcrypt
-
+  
 JWT- json web token-> data will bi encoded in token , base on cryptography
     npm i jsonwebtoken
 
-pre -> it is hook of mongoose ->pre middleware functions are executed one after another, when each middleware calls next
+pre -> it is hook of mongoose ->pre middleware functions are executed one after another, when each middleware calls next  

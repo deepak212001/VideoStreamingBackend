@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from cloudinary
 import fs from "fs"
 // fs means file system helps to read write move
+// fs is a core module of node.js that allows you to work with the file system on your computer
 
 
 // Configuration
@@ -19,7 +20,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 
         //upload the file on cloudinary
 
-        cloudinary.uploader.upload(localFilePath, {
+        const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto"
         })
         //file has been uploded successfull
