@@ -22,7 +22,7 @@ const userSchema = new Schema(
             trim: true,
         },
 
-        fullname: {
+        fullName: {
             type: String,
             required: true,
             lowercase: true,
@@ -41,7 +41,7 @@ const userSchema = new Schema(
 
         watchHistory: [
             {
-                tyoe: Schema.Types.ObjectId,
+                type: Schema.Types.ObjectId,
                 ref: "Video"
             }
         ],
@@ -51,7 +51,7 @@ const userSchema = new Schema(
             required: [true, "Password is required"]
         },
         refreshToken: {
-            type: string
+            type: String
         }
     },
     {
@@ -65,7 +65,7 @@ userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
     // if user only change another detail that time return only next()
 
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 // means save se pehle ye kam karo

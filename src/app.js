@@ -25,7 +25,7 @@ app.use(cookiesParser())
 
 
 //routes
-import userRouter from './routes/user.routers.js'
+import userRouter from './routers/user.routers.js'
 
 //routes declaration means usage   
 app.use("/api/v1/users", userRouter)
