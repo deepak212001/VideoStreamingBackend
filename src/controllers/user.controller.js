@@ -17,7 +17,13 @@ const generateAccessAndRefereshToken = async (userId) => {
         if (!accessToken || !refreshToken) {
             throw new ApiError(500, "Something went wrong while generating Access And Referesh token")
         }
-        
+
+        user.refreshToken = refreshToken
+        await user.save({ validateBeforeSave: false })
+        // validateBeforeSave: false means password validation is not required
+
+        return { accessToken, refreshToken }
+
 
     } catch (error) {
         throw new ApiError(500, "Something went wrong while generating Access And Referesh token")
@@ -41,7 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const { fullName, email, username, password } = req.body
     console.log("email", email);
-    
+
 
     // if (fullName === "") {
     //     throw new ApiError(400, "Full Name is required")
@@ -63,7 +69,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email or username already exists")
     }
 
-    
+
     // console.log("req.body", req.body);
     /*
     req.body [Object: null prototype] {
@@ -73,8 +79,8 @@ const registerUser = asyncHandler(async (req, res) => {
                 email: 'deepak@gmail.com'
                 }
     */
-    
-    
+
+
     // console.log("req.files", req.files);
     /*
     req.files [Object: null prototype] {
@@ -105,7 +111,7 @@ const registerUser = asyncHandler(async (req, res) => {
       }
       */
     // const avatarLocalPath = req.files?.avatar[0]?.path means avatar[0] meanth array ka first object and hai to uska path
-    let avatarLocalPath ;
+    let avatarLocalPath;
     if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
         avatarLocalPath = req.files.avatar[0].path
     }
@@ -118,7 +124,7 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImageLocalPath = req.files.coverImage[0].path
     }
 
-    if (!avatarLocalPath ) {
+    if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required")
     }
 
@@ -153,7 +159,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 })
 
-/*
+
 const loginUser = asyncHandler(async (req, res) => {
     // get email and password from frontend (req body)
     // check if email/username and password are not empty
@@ -186,20 +192,72 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Invalid User credentials")
     }
 
-    // generate jwt token
-    const token = await user.generateJwtToken()
+    // generate token
+    const { accessToken, refreshToken } = await generateAccessAndRefereshToken(user._id)
 
-    if (!token) {
+    if (!accessToken || !refreshToken) {
         throw new ApiError(500, "Something went wrong while generating token")
     }
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
-    return res.status(200).json(new ApiResponse(200, { user, token }, "User Logged In Successfully"))
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    //cookies send karna  hai to ye kuchh options(object) karne hote hai  
+    // by default koi bhi modiication kar sakta hai
+    // par agar httpOnly: true karenge to only server can modify the cookie
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new ApiResponse(200, { accessToken, refreshToken, user: loggedInUser }, "User logged in successfully"))
 })
-*/
+
+
+const logoutUser = asyncHandler(async (req, res) => {
+    // clear the token from the database
+    // clear the token from the cookie
+    // return response with http status
+
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id, 
+        { 
+            $set:{
+                refreshToken: undefined
+            } 
+        }, 
+        { 
+            new: true 
+        }
+    )
+    
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully"))
+
+})
+
+
 
 // 200 is a https status code which means ok
 // 400 is a https status code which means bad request
 // 500 is a https status code which means internal server error
 export {
-    registerUser
+    registerUser,
+    loginUser,
+    logoutUser
 }
