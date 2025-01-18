@@ -4,6 +4,8 @@ import { User } from "../models/user.models.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
+
+
 const generateAccessAndRefereshToken = async (userId) => {
     console.log("userId", userId);
     try {
@@ -284,7 +286,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     
     
     
-        const user = await User.findOne( decodedToken?._id)
+        const user = await User.findById( decodedToken?._id)
     
         if (!user) {
             throw new ApiError(401, "Invaild refresh token")
