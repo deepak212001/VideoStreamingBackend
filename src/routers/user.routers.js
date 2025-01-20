@@ -9,7 +9,8 @@ import {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js"
@@ -41,11 +42,18 @@ router.route("/refresh-token").post(refreshAccessToken)
 
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 
-router.route("/change-details").post(verifyJWT, updateAccountDetails)
+router.route("/current-user").post(verifyJWT, getCurrentUser)
+
+// post request get change the all the details of the user
+// patch request can change only the details that are provided
+router.route("/change-details").patch(verifyJWT, updateAccountDetails)
 
 router.route("/change-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
 
 router.route("/change-coverimage").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
 
+router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
+
+router.route("/watch-history").get(verifyJWT, getWatchHistory)
 
 export default router
