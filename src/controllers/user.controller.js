@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.models.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 
@@ -417,20 +417,33 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     // update avatar in the database
     // return response with http status
 
-    // const avatarLocalPath = req.files?.avatar[0]?.path
-    const avatarLocalPath = req.files?.path // bcz ek hi file hai to direct path bhi likh sakte hai
+    // const avatarLocalPath = req.files?.avatar[0]?.path;
+    // console.log("req.files", req.file);
+    const avatarLocalPath = req.file?.path // bcz ek hi file hai to direct path bhi likh sakte hai
+    console.log("avatarLocalPath ", avatarLocalPath);
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required")
     }
 
+    // Fetch the current user
+    let user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    // Remove the current avatar from Cloudinary if it exists
+    let publicId
+    if (user.avatar) {
+        publicId = user.avatar.split('/').pop().split('.')[0];
+    }
+    console.log('publicId:', publicId);
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
     if (!avatar.url) {
         throw new ApiError(500, "Something went wrong while uploading avatar")
     }
 
-    const user = await User.findByIdAndUpdate(
+    user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -442,12 +455,16 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         }
     ).select("-password")
 
+    // await cloudinary.uploader.destroy(publicId);
+    const deleteResponse = await deleteOnCloudinary(publicId);
+    console.log('Old avatar deleted:', deleteResponse);
+
+
     return res
         .status(200)
         .json(new ApiResponse(200, user, "Avatar updated successfully"))
 
 })
-
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
     // get CoevrImage from frontend
@@ -457,20 +474,31 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     // update CoevrImage in the database
     // return response with http status
 
-    
-    const coverImageLocalPath = req.files?.path // bcz ek hi file hai to direct path bhi likh sakte hai
-
+    console.log("req.file", req.file);
+    const coverImageLocalPath = req.file?.path // bcz ek hi file hai to direct path bhi likh sakte hai
+    console.log("coverImageLocalPath ", coverImageLocalPath);
     if (!coverImageLocalPath) {
         throw new ApiError(400, "Cover Image is required")
     }
 
+
+    // Fetch the current user
+    let user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    // Remove the current coverimage from Cloudinary if it exists
+    let publicId
+    if (user.coverImage) {
+        publicId = user.coverImage.split('/').pop().split('.')[0];
+    }
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if (!coverImage.url) {
         throw new ApiError(500, "Something went wrong while uploading cover Image")
     }
 
-    const user = await User.findByIdAndUpdate(
+    user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -481,13 +509,143 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
             new: true
         }
     ).select("-password")
-
+    await deleteOnCloudinary(publicId);
     return res
         .status(200)
         .json(new ApiResponse(200, user, "Cover Image updated successfully"))
 
 })
 
+
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    // get user id from frontend
+    // check if user exists in the database
+    // return response with http status
+
+    const { username } = req.params //url se id fetch karna hai to params se fetch karenge
+
+    if (!username.trim()) {
+        throw new ApiError(400, "Username is missing")
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subcribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subcribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: { $size: "$subcribers" },
+                channelsSubcribedToCount: { $size: "$subcribedTo" },
+                isSubcribed: {
+                    $cond: {
+                        if: {
+                            $in: [req.user?._id, "$subcribers.subscriber"]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                subcribersCount: 1,
+                channelsSubcribedToCount: 1,
+                isSubcribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                emial: 1
+
+            }
+        }
+    ])
+
+    console.log("channel : ", channel);
+
+    if (!channel?.length) {
+        throw new ApiError(404, "Channel not found aur channel does not exist")
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, channel[0], "User details fetched successfully"))
+
+})
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    // get user id from frontend
+    // check if user exists in the database
+    // get watch history of the user
+    // return response with http status
+
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        _id: 0,
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: { 
+                                $first : "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user[0].watchHistory, "Watch history fetched successfully"))
+})
 
 // 200 is a https status code which means ok
 // 400 is a https status code which means bad request
@@ -501,5 +659,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 }
