@@ -234,8 +234,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1
             }
         },
         {
@@ -369,8 +369,10 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     // return response with http status
 
     const { fullName, email, username } = req.body
-
-    if ([fullName, email, username].some((field) => field?.trim() === "")) {
+    console.log("req.body", req.body);
+    console.log("fullName", fullName);
+    console.log("email", email);
+    if (!fullName || !email || !username) {
         throw new ApiError(400, "All fields are required")
     }
 
@@ -389,18 +391,18 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     // aur
     */
     const user = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user?._id,
         {
             $set: {
-                fullName,
+                fullName: fullName,
                 email: email,
-                username
+                username: username
             }
         },
         {
             new: true
         }
-    ).select("-password")
+    ).select("-password -refreshToken")
 
     return res
         .status(200)
@@ -631,8 +633,8 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                     },
                     {
                         $addFields: {
-                            owner: { 
-                                $first : "$owner"
+                            owner: {
+                                $first: "$owner"
                             }
                         }
                     }
