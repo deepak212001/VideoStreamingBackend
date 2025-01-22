@@ -29,7 +29,7 @@ const videoSchema = new Schema(
             required: true
         },
 
-        videoFile: {
+        view: {
             type: Number,
             default: 0
         },
