@@ -66,7 +66,7 @@ userSchema.pre("save", async function (next) {
     // if user only change another detail that time return only next()
 
     this.password = await bcrypt.hash(this.password, 10)
-    next()
+    next()  
 })
 // means save se pehle ye kam karo
 // 10 is round
@@ -99,6 +99,8 @@ userSchema.methods.generateAccessToken = function () {
     )
 }
 
+// jwt.sign() is a method, used to create a new token
+// _id, email, username, fullName are payload data
 
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(

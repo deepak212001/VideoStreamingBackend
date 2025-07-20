@@ -68,7 +68,11 @@ const registerUser = asyncHandler(async (req, res) => {
     // $or: [{ email }, { user }] means email or user name
     const existedUser = await User.findOne({ $or: [{ email }, { username }] })
     if (existedUser) {
-        throw new ApiError(409, "User with email or username already exists")
+        // throw new ApiError(409, "User with email or username already exists")
+        return res.status(409).json({
+            // success: false,
+            message: "User with email or username already exists"
+        })
     }
 
 
@@ -242,6 +246,20 @@ const logoutUser = asyncHandler(async (req, res) => {
             new: true
         }
     )
+    // $unset: { refreshToken: 1 } means remove the refreshToken field from the user document
+    // new: true means return the updated user document
+
+    // aur ye code( bottom one) use kar rhe hai to route me verifyJWT middleware use nhi karege to bhi chalega 
+    // const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    //  req.cookies.refreshToken  for website || req.body.refreshToken for mpbile app
+    // if (!refreshToken) return res.status(400).json({ msg: 'No token found in cookie' });
+
+    // const user = await User.findOne({ refreshToken });
+    // if (!user) return res.status(400).json({ msg: 'Invalid token' });
+
+    // user.refreshToken = null;
+    // await user.save();
+
 
     if (!user) {
         throw new ApiError(404, "User not found")
@@ -283,8 +301,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         )
-
-
 
         const user = await User.findById(decodedToken?._id)
 
@@ -369,9 +385,9 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     // return response with http status
 
     const { fullName, email, username } = req.body
-    console.log("req.body", req.body);
-    console.log("fullName", fullName);
-    console.log("email", email);
+    // console.log("req.body", req.body);
+    // console.log("fullName", fullName);
+    // console.log("email", email);
     if (!fullName || !email || !username) {
         throw new ApiError(400, "All fields are required")
     }
@@ -605,6 +621,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
             $match: {
                 _id: new mongoose.Types.ObjectId(req.user._id)
             }
+            // req.user._id -> string hai to mongoose.Types.ObjectId(req.user._id) se convert karna padega to ObjectId type 
         },
         {
             $lookup: {

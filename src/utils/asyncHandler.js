@@ -20,9 +20,9 @@
 
 
 
-const asyncHandler = (requestHandler) => {
+const asyncHandler = (fun) => {
     return (req, res, next) => {
-        Promise.resolve(requestHandler(req, res, next)).
+        Promise.resolve(fun(req, res, next)).
         catch ((err) => next(err))
     }
 }

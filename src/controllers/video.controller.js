@@ -4,57 +4,78 @@ import { User } from "../models/user.models.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
 
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
+    // const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+    // //TODO: get all videos based on query, sort, pagination
 
-    const pageNumber = +page;
-    const limitNumber = +limit;
-    console.log("they deepak")
-    if (pageNumber < 1 || limitNumber < 1) {
-        throw new ApiError(
-            400,
-            "page number or limit number must be provided as positive numbers"
-        );
+    // const pageNumber = +page;
+    // const limitNumber = +limit;
+    // console.log("they deepak")
+    // if (pageNumber < 1 || limitNumber < 1) {
+    //     throw new ApiError(
+    //         400,
+    //         "page number or limit number must be provided as positive numbers"
+    //     );
+    // }
+
+    // const pipline = [
+    //     {
+    //         $match: {
+    //             ...(query && {
+    //                 $or: [
+    //                     { title: new RegExp(query, "i") },
+    //                     // { description: new RegExp(query, "i") },
+    //                 ],
+    //             }),
+    //             ...(userId && { user: new mongoose.Types.ObjectId(userId) }),
+    //         },
+    //     },
+
+    //     {
+    //         $sort: {
+    //             [sortBy || "createdAt"]: sortType === "asc" ? 1 : -1,
+    //         },
+    //     },
+    // ];
+    // try {
+    //     const options = {
+    //         page: pageNumber,
+    //         limit: limitNumber,
+    //     };
+    //     const videos = await Video.aggregatePaginate(pipline, options);
+    //     console.log(videos)
+
+    //     return res
+    //         .status(200)
+    //         .json(new ApiResponse(200, videos, "Videos found successfully"));
+    // } catch (error) {
+    //     throw new ApiError(500, "Error fetching videos");
+    // }
+
+    const { page = 1, limit = 30 } = req.query;
+    const videos = await Video.find({ isPublished: true })
+        .sort({ createdAt: -1 }) // Latest first
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate("owner", "username avatar") // Channel info
+    if (!videos || videos.length === 0) {
+        return res.status(404).json({
+            success: false,
+            message: "No videos found"
+        });
     }
-
-    const pipline = [
-        {
-            $match: {
-                ...(query && {
-                    $or: [
-                        { title: new RegExp(query, "i") },
-                        // { description: new RegExp(query, "i") },
-                    ],
-                }),
-                ...(userId && { user: new mongoose.Types.ObjectId(userId) }),
-            },
-        },
-
-        {
-            $sort: {
-                [sortBy || "createdAt"]: sortType === "asc" ? 1 : -1,
-            },
-        },
-    ];
-    try {
-        const options = {
-            page: pageNumber,
-            limit: limitNumber,
-        };
-        const videos = await Video.aggregatePaginate(pipline, options);
-        console.log(videos)
-
-        return res
-            .status(200)
-            .json(new ApiResponse(200, videos, "Videos found successfully"));
-    } catch (error) {
-        throw new ApiError(500, "Error fetching videos");
-    }
+    const totalVideos = await Video.countDocuments({ isPublished: true });
+    res.status(200).json({
+        success: true,
+        totalVideos,
+        currentPage: Number(page),
+        totalPages: Math.ceil(totalVideos / limit),
+        videos
+    });
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -185,7 +206,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video Id ");
     }
 
-    const video = await Video.findById(videoId).populate("owner", "name");
+    const video = await Video.findById(videoId).populate("owner", "username");
     console.log(video)
     if (!video) {
         throw new ApiError(500, "Video not found");
@@ -227,7 +248,7 @@ const updateVideo = asyncHandler(async (req, res) => {
         }
         thumbnail = uploadedThumbnail.url;
     }
-
+    const publicId = existingVideo.thumbnail.public_id;
     const updateVideosDetail = await Video.findByIdAndUpdate(
         videoId,
         {
@@ -244,7 +265,10 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (!updateVideosDetail) {
         throw new ApiError(501, "Video details not updated properly");
     }
-
+    const deleteThumbnailResponse = await deleteOnCloudinary(publicId);
+    if (!deleteThumbnailResponse) {
+        throw new ApiError(501, "Thumbnail not deleted from cloudinary");
+    }
     return res
         .status(201)
         .json(
@@ -263,10 +287,23 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "provide video id please");
     }
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+    // Check if the user is the owner of the video
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to delete this video");
+    }
+    // Delete the video from Cloudinary
+    const deleteVideoResponse = await deleteOnCloudinary(video.videoFile.public_id);
+    const deleteThumbnailResponse = await deleteOnCloudinary(video.thumbnail.public_id);
+    if (!deleteVideoResponse || !deleteThumbnailResponse) {
+        throw new ApiError(500, "Failed to delete video or thumbnail from Cloudinary");
+    }
 
     const removeVideo = await Video.findByIdAndDelete(
         videoId,
-
         {
             new: true,
         }

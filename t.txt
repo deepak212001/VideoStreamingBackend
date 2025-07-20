@@ -38,6 +38,7 @@ bcrypt-  a library to help you hash password
     npm i bcrypt
   
 JWT- json web token-> data will bi encoded in token , base on cryptography
+jwt is a bearer token , means jo ye token send karega us ko data mil jayega.
     npm i jsonwebtoken
 
 pre -> it is hook of mongoose ->pre middleware functions are executed one after another, when each middleware calls next  
