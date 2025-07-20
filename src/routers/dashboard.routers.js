@@ -7,7 +7,7 @@ import {verifyJWT} from "../middlewares/auth.middleware.js"
 
 const router = Router();
 
-router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
+// router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
 
 router.route("/:userId").get(getChannelStats);
 router.route("/v/:userId").get(getChannelVideos);

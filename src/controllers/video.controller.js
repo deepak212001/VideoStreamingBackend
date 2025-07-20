@@ -84,6 +84,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if ([title, description].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "Title & Description are required fields")
     }
+    console.log('file is a video file', req.files)
 
     const videoFilePath = req.files?.videoFile[0]?.path
     const thumbnailPath = req.files?.thumbnail[0]?.path
@@ -184,8 +185,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         duration: videoFile?.duration, // directly available from cloudinary
         videoFile: videoFile?.url,
         thumbnail: thumbnail?.url,
-        owner: req.user?._id,
-        isPublished: false
+        owner: req.user?._id
     })
 
     const uploadedVideo = await Video.findById(video._id) // just verifying to see if the document is actually registered in DB

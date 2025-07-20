@@ -9,7 +9,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
     const { videoId } = req.params
-    const { page = 1, limit = 10 } = req.query
+    const { page = 1, limit = 30 } = req.query
 
     if (!videoId) {
         throw new ApiError(404, "give valid video id");
@@ -21,18 +21,20 @@ const getVideoComments = asyncHandler(async (req, res) => {
         throw new ApiError(404, "video not avelable in database");
     }
 
-    const pageNumber = +page;
-    const limitNumber = +limit;
+    // const pageNumber = +page;
+    // const limitNumber = +limit;
 
-    if (!(pageNumber > 0 && limitNumber > 0)) {
+    if (!(page > 0 && limit > 0)) {
         throw new ApiError(404, "give postive pagenumber or limitNumber");
     }
 
-    const skip = (pageNumber - 1) * limitNumber;
+    const skip = (page - 1) * limit;
 
     const comment = await Comment.find({ video: videoId })
+        .sort({ createdAt: -1 }) // Latest first
         .skip(skip)
-        .limit(limitNumber);
+        .limit(Number(limit))
+        .populate("owner", "username avatar")
 
     if (!comment) {
         throw new ApiError(500, "no comments avelable ");
@@ -47,7 +49,6 @@ const addComment = asyncHandler(async (req, res) => {
     // TODO: add a comment to a video
     const { videoId } = req.params
     const { content } = req.body
-    console.log(content)
     console.log("Full Request Body:", req.body);
     console.log("Extracted Content:", content);
 

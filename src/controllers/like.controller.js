@@ -1,4 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose"
+import { User } from "../models/user.models.js"
+import { Video } from "../models/video.models.js"
 import { Like } from "../models/like.models.js"
 import { Tweet } from "../models/tweet.models.js"
 import { ApiError } from "../utils/ApiError.js"
@@ -26,14 +28,14 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
             .json(new ApiResponse(200, { Liked: false }, "Video like removed successfully"))
     }
 
-    const likeDocument = await Like.create(
+    const likeVideo = await Like.create(
         {
             likedBy: req.user?._id,
             video: videoId
         }
     )
 
-    if (!likeDocument) {
+    if (!likeVideo) {
         throw new ApiError(400, "Like document creation failed")
     }
 
@@ -47,7 +49,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     //TODO: toggle like on comment
     const userId = req.user?._id;
     console.log(req.params)
-    console.log(tweetId)
+    // console.log(tweetId)
     console.log(userId)
     // Validate tweet ID
     if (!isValidObjectId(commentId)) {

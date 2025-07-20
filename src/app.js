@@ -9,11 +9,11 @@ app.use(cors({
     credentials: true
 }))
 
-app.use(express.json({ limit: "16kb" }))
+app.use(express.json())
 // that line give allows to accept json file and only not accept more than size limit
 
 
-app.use(express.urlencoded({ extended: true, limit: "16kb" }))
+app.use(express.urlencoded())
 // ye url ko encode karta hai 
 
 app.use(express.static("public"))
